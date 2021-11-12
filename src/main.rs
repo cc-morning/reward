@@ -115,8 +115,8 @@ async fn main() -> Result<()> {
         };
 
         for ron in rate {
-            println!("{}", ron.0);
-            println!("\n{:<20}{:<30}{:<40}", "掉落权重", "掉率概率", "战利品");
+            println!("\n{}", ron.0);
+            println!("{:<20}{:<30}{:<40}", "掉落权重", "掉率概率", "战利品");
 
             for loot in ron.1 {
                 println!(
@@ -127,7 +127,7 @@ async fn main() -> Result<()> {
                 );
             }
         }
-        println!("time: {:.2}s", now.elapsed().as_secs_f32());
+        println!("\ntime: {:.2}s", now.elapsed().as_secs_f32());
     }
 }
 
