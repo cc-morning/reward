@@ -12,3 +12,8 @@ rayon = { version = "1", default-features = false }
 regex = { version = "1", default-features = false, features = [ "std" ] }
 ron = { version = "0.7", default-features = false }
 tokio = { version = "1", default-features = false, features = [ "macros", "rt-multi-thread" ] }
+
+[profile.release]
+lto = true
+codegen-units = 1
+panic = "abort"
