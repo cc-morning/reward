@@ -5,10 +5,8 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::{borrow::Borrow, collections::HashMap, io, ops::Add, time::Instant};
 
-static DUNGEON_URL: &'static str =
-    "https://hub.fastgit.org/EvanMeek/veloren-wecw-assets/tree/main/common/loot_tables/dungeon/";
-static RAW_URL: &'static str =
-    "https://raw.fastgit.org/EvanMeek/veloren-wecw-assets/main/common/loot_tables/dungeon/";
+static DUNGEON_URL: &'static str = "https://hub.fastgit.org/EvanMeek/veloren-wecw-assets/tree/main/common/loot_tables/dungeon/";
+static RAW_URL: &'static str = "https://raw.fastgit.org/EvanMeek/veloren-wecw-assets/main/common/loot_tables/dungeon/";
 static TARGET_URL: &'static str = "https://raw.fastgit.org/EvanMeek/veloren-wecw-assets/main/";
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
@@ -25,8 +23,7 @@ async fn main() -> Result<()> {
 
     let mut ron_future = HashMap::with_capacity(tiers.len());
     let mut ron_cache = HashMap::with_capacity(tiers.len());
-    let mut rate_cache =
-        HashMap::<String, Vec<(String, Vec<(f32, f32, String)>)>>::with_capacity(tiers.len());
+    let mut rate_cache = HashMap::<String, Vec<(String, Vec<(f32, f32, String)>)>>::with_capacity(tiers.len());
 
     let mut tier_str = String::new();
     for (index, tier) in tiers.iter().enumerate() {
