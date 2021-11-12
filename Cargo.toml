@@ -1,0 +1,14 @@
+[package]
+name = "reward"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = { version = "1", default-features = false, features = [ "std" ] }
+kuchiki = { version = "0.8", default-features = false }
+reqwest = { version = "0.11", default-features = false, features = [ "blocking", "json", "native-tls" ] }
+serde = { version = "1", default-features = false }
+rayon = { version = "1", default-features = false }
+regex = { version = "1", default-features = false, features = [ "std" ] }
+ron = { version = "0.7", default-features = false }
+tokio = { version = "1", default-features = false, features = [ "macros", "rt-multi-thread" ] }
