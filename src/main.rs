@@ -6,8 +6,8 @@ use serde::{Deserialize, Serialize};
 use std::{borrow::Borrow, collections::HashMap, io, ops::Add, time::Instant};
 
 static DUNGEON_URL: &'static str = "https://hub.fastgit.org/EvanMeek/veloren-wecw-assets/tree/main/common/loot_tables/dungeon/";
-static RAW_URL: &'static str = "https://raw.fastgit.org/EvanMeek/veloren-wecw-assets/main/common/loot_tables/dungeon/";
-static TARGET_URL: &'static str = "https://raw.fastgit.org/EvanMeek/veloren-wecw-assets/main/";
+static RAW_URL: &'static str = "https://cdn.jsdelivr.net/gh/EvanMeek/veloren-wecw-assets@main/common/loot_tables/dungeon/";
+static TARGET_URL: &'static str = "https://cdn.jsdelivr.net/gh/EvanMeek/veloren-wecw-assets@main/";
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub enum LootSpec<T: AsRef<str>> {
@@ -204,25 +204,36 @@ fn parse(tier: &str, ron: &str) -> Result<Vec<(f32, LootSpec<String>)>> {
 }
 
 fn parse_name(loot: &LootSpec<String>) -> Result<String> {
-    let url = {
+    let (url, range) = {
         let mut url = String::from(TARGET_URL);
-        let path = match loot {
-            LootSpec::Item(item) => format!("{}", item),
-            LootSpec::ItemQuantity(item, _min, _max) => format!("{}", item),
+        let (path, range) = match loot {
+            LootSpec::Item(item) => (format!("{}", item), None),
+            LootSpec::ItemQuantity(item, min, max) => (format!("{}", item), Some((min, max))),
             LootSpec::LootTable(_) => return Ok(String::from("道具包")),
             LootSpec::Nothing => return Ok(String::from("无")),
         };
         url.push_str(path.replace(".", "/").as_str());
         url.push_str(".ron");
-        url
+        (url, range)
     };
     let body = reqwest::blocking::get(url)?.text()?;
 
     let regex = Regex::new(r#"".*?""#)?;
-    let name = match regex.captures(&body) {
+    let mut name = match regex.captures(&body) {
         Some(v) => v[0].replace("\"", ""),
         None => String::from("无"),
     };
+
+    match range {
+        Some(range) => {
+            name.push_str(" (");
+            name.push_str(range.0.to_string().as_str());
+            name.push_str(" ~ ");
+            name.push_str(range.1.to_string().as_str());
+            name.push_str(")");
+        }
+        None => {}
+    }
 
     Ok(name)
 }
