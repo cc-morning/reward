@@ -5,7 +5,7 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::{borrow::Borrow, collections::HashMap, io, ops::Add, time::Instant};
 
-static DUNGEON_URL: &'static str = "https://hub.fastgit.org/EvanMeek/veloren-wecw-assets/tree/main/common/loot_tables/dungeon/";
+static DUNGEON_URL: &'static str = "https://github.com/EvanMeek/veloren-wecw-assets/tree/main/common/loot_tables/dungeon/";
 static RAW_URL: &'static str = "https://cdn.jsdelivr.net/gh/EvanMeek/veloren-wecw-assets@main/common/loot_tables/dungeon/";
 static TARGET_URL: &'static str = "https://cdn.jsdelivr.net/gh/EvanMeek/veloren-wecw-assets@main/";
 
@@ -63,19 +63,15 @@ async fn main() -> Result<()> {
 
         let now = Instant::now();
 
-        let (tier, rons) = if ron_future.contains_key(choice) {
-            if let Some(join) = ron_future.get_mut(choice) {
-                let value: (String, Vec<String>) = match join.await {
-                    Ok(value) => value,
-                    Err(_) => Default::default(),
-                };
-                ron_future.remove(choice);
-                ron_cache.insert(choice.to_string(), Some(value.clone()));
+        let (tier, rons) = if let Some(join) = ron_future.get_mut(choice) {
+            let value: (String, Vec<String>) = match join.await {
+                Ok(value) => value,
+                Err(_) => Default::default(),
+            };
+            ron_future.remove(choice);
+            ron_cache.insert(choice.to_string(), Some(value.clone()));
 
-                value
-            } else {
-                Default::default()
-            }
+            value
         } else {
             if let Some(Some(value)) = ron_cache.get(choice) {
                 value.clone()
@@ -132,30 +128,7 @@ async fn main() -> Result<()> {
 }
 
 async fn get_tiers() -> Result<Vec<String>> {
-    let body = reqwest::get(DUNGEON_URL).await?.text().await?;
-
-    let document = kuchiki::parse_html().one(body);
-    let r#as = document
-        .select("a[class=\"js-navigation-open Link--primary\"]")
-        .unwrap();
-
-    let tiers = r#as
-        .filter_map(|a| {
-            let attrs = a.attributes.borrow();
-            match attrs.borrow().get::<&str>("href") {
-                Some(v) => {
-                    let v = v.chars().rev().collect::<String>();
-                    match v.find('/') {
-                        Some(index) => Some(v[..index].chars().rev().collect::<String>()),
-                        None => None,
-                    }
-                }
-                None => None,
-            }
-        })
-        .collect::<Vec<String>>();
-
-    Ok(tiers)
+    get_files(DUNGEON_URL, "a[class=\"js-navigation-open Link--primary\"]").await
 }
 
 async fn get_rons(tier: &str) -> Result<Vec<String>> {
@@ -164,10 +137,15 @@ async fn get_rons(tier: &str) -> Result<Vec<String>> {
         url.push_str(tier);
         url
     };
+
+    get_files(&url, "a[title$=\".ron\"]").await
+}
+
+async fn get_files(url: &str, selectors: &str) -> Result<Vec<String>> {
     let body = reqwest::get(url).await?.text().await?;
 
     let document = kuchiki::parse_html().one(body);
-    let r#as = document.select("a[title$=\".ron\"]").unwrap();
+    let r#as = document.select(selectors).unwrap();
 
     let rons = r#as
         .filter_map(|a| {
@@ -180,7 +158,7 @@ async fn get_rons(tier: &str) -> Result<Vec<String>> {
                         None => None,
                     }
                 }
-                None => None,
+                _ => None,
             }
         })
         .collect::<Vec<String>>();
